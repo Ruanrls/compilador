@@ -19,5 +19,8 @@ export default {
       return {
         titleTemplate: 'Ruan – %s',
       }
-    }
+    },
+    head: (
+      <link rel="shortcut icon" href="/vercel.svg" type="image/ico" />
+    )
 }
