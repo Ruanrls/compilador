@@ -1,0 +1,230 @@
+## Implementação
+
+Você pode conferir como foi realizada a implementação a seguir, mas caso prefira pode
+encontrá-lo no meu [github](https://github.com/Ruanrls/compilador/src/codebase/lexer.py)
+
+```python
+import re
+from tokens import Token, TOKEN_TYPE
+
+class Lexer:
+
+    def __init__(self):
+        self.current_line = 1
+        self.position_inline = 0
+        self.position = 0
+        self.tokens = []
+        self.code_length = 0
+        self.reserved_keywords = {
+            'PROGRAMA': TOKEN_TYPE.PROGRAMA,
+            'VARIAVEIS': TOKEN_TYPE.VARIAVEIS,
+            'INTEIRO': TOKEN_TYPE.INTEIRO,
+            'REAL': TOKEN_TYPE.REAL,
+            'LOGICO': TOKEN_TYPE.LOGICO,
+            'CARACTER': TOKEN_TYPE.CARACTER,
+            'SE': TOKEN_TYPE.SE,
+            'SENAO': TOKEN_TYPE.SENAO,
+            'ENQUANTO': TOKEN_TYPE.ENQUANTO,
+            'LEIA': TOKEN_TYPE.LEIA,
+            'ESCREVA': TOKEN_TYPE.ESCREVA,
+            'VERDADEIRO': TOKEN_TYPE.VERDADEIRO,
+            'FALSO': TOKEN_TYPE.FALSO
+        }
+        self.max_identify_length = 16
+        self.delimiters = {
+            ':': TOKEN_TYPE.DPONTOS,
+            ';': TOKEN_TYPE.PVIRG,
+            ',': TOKEN_TYPE.VIRG,
+            '(': TOKEN_TYPE.ABREPAR,
+            ')': TOKEN_TYPE.FECHAPAR,
+            '{': TOKEN_TYPE.ABRECH,
+            '}': TOKEN_TYPE.FECHACH
+        }
+        self.operators = {
+            '+': TOKEN_TYPE.OPAD,
+            '-': TOKEN_TYPE.OPAD,
+            '*': TOKEN_TYPE.OPMUL,
+            '/': TOKEN_TYPE.OPMUL,
+            '=': TOKEN_TYPE.OPREL,
+            '<': TOKEN_TYPE.OPREL,
+            '>': TOKEN_TYPE.OPREL,
+            '<=': TOKEN_TYPE.OPREL,
+            '>=': TOKEN_TYPE.OPREL,
+            '<>': TOKEN_TYPE.OPREL,
+            '!': TOKEN_TYPE.OPNEG,
+        }
+
+    def load(self, file_name):
+        with open(file_name, 'r') as file:
+            self.code = file.read()
+        self.code_length = len(self.code)
+    
+    def parse_tokens(self):
+        while self.code_length > self.position:
+            char = self.code[self.position]
+
+            if char.isspace():
+                if char == '\n':
+                    self.current_line += 1
+                    self.position_inline = 0
+                self.position += 1
+                self.position_inline += 1
+                continue
+
+            if char == '/':
+                next_character = self.code[self.position + 1]
+                if next_character == '/':
+                    self.get_line_comment()
+                    continue    
+                elif next_character == '*':
+                    self.get_block_comment()
+                    continue
+
+            if char.isalpha():
+                token = self.get_identify()
+                self.tokens.append(token)
+            elif char.isdigit():
+                token = self.get_number()
+                self.tokens.append(token)
+            elif char in self.delimiters.keys():
+                token = self.get_delimiter()
+                self.tokens.append(token)
+            elif char in self.operators.keys():
+                token = self.get_operator()
+                self.tokens.append(token)
+            elif char == '{':
+                token = self.get_bracket_open()
+                self.tokens.append(token)
+            elif char == '}':
+                token = self.get_bracket_close()
+                self.tokens.append(token)
+            elif char == '"':
+                token = self.get_string()
+                self.tokens.append(token)
+            else:
+                raise Exception(f'Invalid character {char}')
+
+    def get_identify(self):
+        lexeme = ''
+        while self.code_length > self.position:
+            char = self.code[self.position]
+            if char.isalnum():
+                lexeme += char
+                self.position += 1
+                self.position_inline += 1
+            else:
+                break
+
+        if lexeme.upper() in self.reserved_keywords.keys():
+            return Token(self.reserved_keywords[lexeme.upper()], lexeme, self.current_line, self.position_inline)
+        else:
+            if len(lexeme) > self.max_identify_length:
+                raise Exception(f'Invalid token {lexeme} at line {self.current_line}/{self.position_inline}')
+            return Token(TOKEN_TYPE.IDENT, lexeme, self.current_line, self.position_inline)
+    
+    def get_number(self):
+        lexeme = ''
+        while self.code_length > self.position:
+            char = self.code[self.position]
+            if char.isdigit() or char == '.':
+                lexeme += char
+                self.position += 1
+                self.position_inline += 1
+            else:
+                break
+
+        number_regex = r'^\d+(\.\d+)?$'
+        if re.match(number_regex, lexeme):
+            return Token(TOKEN_TYPE.NUM, lexeme, self.current_line, self.position_inline)
+        raise Exception(f'Invalid character {lexeme} at line {self.current_line}/{self.position_inline}')
+    
+    def get_delimiter(self):
+        char = self.code[self.position]
+        self.position += 1
+        self.position_inline += 1
+
+        if char == ':':
+            next_character = self.code[self.position]
+            if next_character == '=':
+                self.position += 1
+                self.position_inline += 1
+                return Token(TOKEN_TYPE.ATRIB, ':=', self.current_line, self.position_inline)
+            else:
+                return Token(TOKEN_TYPE.DPONTOS, char, self.current_line, self.position_inline)
+
+        if char in self.delimiters.keys():
+            return Token(self.delimiters[char], char, self.current_line, self.position_inline)
+        raise Exception(f'Invalid character {char} at line {self.current_line}/{self.position_inline}')
+    
+    def get_operator(self):
+        lexeme = ''
+        while self.code_length > self.position:
+            char = self.code[self.position]
+            if char in self.operators.keys():
+                lexeme += char
+                self.position += 1
+                self.position_inline += 1
+            else:
+                break
+
+        if lexeme in self.operators.keys():
+            return Token(self.operators[lexeme], lexeme, self.current_line, self.position_inline)
+        raise Exception(f'Invalid character {lexeme} at line {self.current_line}/{self.position_inline}')
+    
+    def get_bracket_open(self):
+        return Token(TOKEN_TYPE.ABRECH, '{', self.current_line, self.position_inline)
+
+    def get_bracket_close(self):
+        return Token(TOKEN_TYPE.FECHACH, '}', self.current_line, self.position_inline)
+    
+    def get_string(self):
+        lexeme = ''
+        #skip "
+        self.position += 1
+        self.position_inline += 1
+
+        while self.code_length > self.position:
+            char = self.code[self.position]
+
+            self.position += 1
+            self.position_inline += 1
+            if char == '"':
+                lexeme += char
+                return Token(TOKEN_TYPE.CADEIA, lexeme, self.current_line, self.position_inline)
+            else:
+                lexeme += char
+        raise Exception(f'Aspas não fechada')
+
+    def get_line_comment(self):
+        while self.code_length > self.position:
+            char = self.code[self.position]
+
+            self.position += 1
+            self.position_inline += 1
+            if char == '\n':
+                self.current_line += 1
+                self.position_inline = 0
+                break
+            else:
+                pass
+
+    def get_block_comment(self):
+        while self.code_length > self.position:
+            char = self.code[self.position]
+            self.position += 1
+            self.position_inline += 1
+            if char == '*':
+                next_character = self.code[self.position]
+                if next_character == '/':
+                    self.position += 1
+                    self.position_inline += 1
+                    return
+            else:
+                continue
+        raise Exception('Block comment not closed')
+
+    def get_next_token(self):
+        yield from self.tokens
+        yield Token(TOKEN_TYPE.EOF, 'EOF', self.current_line, self.position_inline)
+        yield
+```

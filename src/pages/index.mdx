@@ -1,0 +1,46 @@
+# Trabalho de Compiladores
+Este trabalho tem como objetivo implementar um analisador léxico e sintático
+para a linguagem Mini-Pascal.
+
+O analisador léxico será responsável por identificar os tokens presentes no código fonte,
+enquanto o analisador sintático irá verificar se a estrutura do código está de acordo com
+a gramática definida para a linguagem.
+
+Ao final do trabalho, espera-se que o analisador seja capaz de identificar corretamente os tokens
+presentes no código fonte e verificar se a estrutura do código está de acordo com a gramática definida
+para a linguagem.
+
+# Rodando o projeto
+
+O trabalho foi realizado utilizando a linguagem python, logo será necessário que você o tenha
+instalado em sua máquina.
+
+Para rodar digite em seu terminal:
+`python3 main.py -p /caminho/para/o/arquivo`
+
+esse script irá fazer a análise do arquivo passado como parâmetro.
+
+## Argumentos
+
+- **-p (ou --path)** *file_name*: Passar este argumento fará com que o projeto faça a análise do arquivo
+especificado como parâmetro.
+
+- **-f (ou --folder)** *path_to_foder*: Passar este argumento fará com que o projeto faça a
+análise de todos os arquivos (com a extensão .txt) encontrados na pasta definida.
+
+## Exemplo de saída:
+
+```bash
+Compiling file:  exemplo16.txt
+expected a command or idenfier, received (18, ';')
+
+------------------------
+
+Compiling file:  exemplo17.txt
+Expected (23, '{') but found (1, 'VARIAVEIS') on line 4
+
+------------------------
+
+Compiling file:  exemplo29.txt
+Expected (19, ':') but found (2, 'INTEIRO') on line 2
+```

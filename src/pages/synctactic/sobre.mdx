@@ -1,0 +1,89 @@
+import { Callout } from 'nextra/components'
+
+## Analisador Sintático
+
+<Callout type="info">
+    A classe Syntactic implementa um analisador sintático para analisar a estrutura
+    gramatical de um código fonte. O analisador sintático recebe uma sequência de tokens
+    (gerada pelo analisador léxico) e verifica se essa sequência segue as regras da gramática
+    definida pela linguagem.
+</Callout>
+
+### Regras da linguagem:
+
+```
+P = {
+    PROG → programa id pvirg DECLS C-COMP
+    DECLS → _ | variaveis LIST-DECLS
+    LIST-DECLS → DECL-TIPO D
+    D → _ | LIST-DECLS
+    DECL-TIPO → LIST-ID dpontos TIPO pvirg
+    LIST-ID → id E
+    E → _ | virg LIST-ID
+    TIPO → inteiro | real | logico | caracter
+    C-COMP → abrech LISTA-COMANDOS fechach
+    LISTA-COMANDOS → COMANDOS G
+    G → _ | LISTA-COMANDOS
+    COMANDOS → IF | WHILE | READ | WRITE | ATRIB
+    IF → se abrepar EXPR fechapar C-COMP H
+    H → _ | senao C-COMP
+    WHILE → enquanto abrepar EXPR fechapar C-COMP
+    READ → leia abrepar LIST-ID fechapar pvirg
+    ATRIB → id atrib EXPR pvirg
+    WRITE → escreva abrepar LIST-W fechapar pvirg
+    LIST-W → ELEM-W L
+    L → _ | virg LIST-W
+    ELEM-W → EXPR | cadeia
+    EXPR → SIMPLES P
+    P → _ | oprel SIMPLES
+    SIMPLES → TERMO R
+    R → _ | opad SIMPLES
+    TERMO → FAT S
+    S → _ | opmul TERMO
+    FAT → id | cte | abrepar EXPR fechapar | verdadeiro | falso | opneg FAT
+}
+```
+
+---
+
+#### Métodos de apoio da classe Syntactic
+
+**__init__**: O método inicializador da classe. Ele define as variáveis current_token, lexer e get_next_token como nulas.
+
+**interpreter**: Esse método é responsável por iniciar a interpretação do código-fonte. Ele instancia o analisador léxico (Lexer), carrega o arquivo de código-fonte e realiza a análise léxica, gerando a sequência de tokens.
+
+**initialize**: Esse método é responsável por inicializar o analisador sintático. Ele verifica se o analisador léxico foi inicializado corretamente e define o método get_next_token para obter o próximo token da sequência. Além disso, ele define o primeiro token atual (current_token) como o próximo token obtido.
+
+**validate_token**: Esse método é usado para validar se o token atual (current_token) corresponde ao token esperado. Ele recebe um token esperado como parâmetro e compara o tipo do token atual com o tipo do token esperado. Se eles não corresponderem, uma exceção é lançada indicando o erro.
+
+**consume**: Esse método é responsável por consumir um token da sequência. Ele verifica se o analisador léxico e o token atual estão inicializados corretamente e chama o método validate_token para verificar se o token atual corresponde ao token esperado. Em seguida, ele obtém o próximo token da sequência e o define como o novo token atual.
+
+---
+
+#### Tratamento de regras
+
+A classe Syntactic também possui uma série de métodos que implementam as regras de produção
+da gramática da linguagem. Cada método corresponde a uma regra da gramática e é responsável
+por verificar se a sequência de tokens segue essa regra específica. Caso contrário, uma exceção
+é lançada indicando o erro. Os métodos principais são:
+
+**prog**: Verifica a estrutura de um programa, verificando a presença do token "PROGRAMA",
+um identificador, um ponto e vírgula, seguido por chamadas aos métodos `decls()` e `c_comp()`,
+e finalmente o token de fim de arquivo.
+
+**decls**: Verifica a presença da declaração de variáveis, chamando o método `list_decls()`.
+
+**list_decls**: Verifica uma lista de declarações de variáveis, chamando o método `decl_type()` e `d()`.
+
+**decl_type**: Verifica o tipo de uma declaração de variável, chamando o método `list_id()`,
+verificando os dois pontos e chamando o método `_type()`, seguido por um ponto e vírgula.
+
+**c_comp**: Verifica uma composição de comandos, verificando um abre-chaves, chamando o
+método `command_list()`, e verificando um fecha-chaves.
+
+<Callout type="warning">
+    Esses são apenas alguns dos métodos presentes na classe Syntactic.
+    Cada método implementa uma parte específica da gramática da linguagem e verifica se a
+    sequência de tokens segue essa parte da gramática. Caso algum erro seja encontrado durante
+    a análise sintática, uma exceção é lançada para indicar o erro encontrado.
+</Callout>

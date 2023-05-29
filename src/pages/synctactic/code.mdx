@@ -1,37 +1,10 @@
-from lexer import Lexer, TOKEN_TYPE
+## Implementação
 
-'''
-P= {
-PROG → programa id pvirg DECLS C-COMP
-DECLS → _ | variaveis LIST-DECLS
-LIST-DECLS → DECL-TIPO D
-D → _ | LIST-DECLS
-DECL-TIPO → LIST-ID dpontos TIPO pvirg
-LIST-ID → id E
-E → _ | virg LIST-ID
-TIPO → inteiro | real | logico | caracter
-C-COMP → abrech LISTA-COMANDOS fechach
-LISTA-COMANDOS → COMANDOS G
-G → _ | LISTA-COMANDOS
-COMANDOS → IF | WHILE | READ | WRITE | ATRIB
-IF → se abrepar EXPR fechapar C-COMP H
-H → _ | senao C-COMP
-WHILE → enquanto abrepar EXPR fechapar C-COMP
-READ → leia abrepar LIST-ID fechapar pvirg
-ATRIB → id atrib EXPR pvirg
-WRITE → escreva abrepar LIST-W fechapar pvirg
-LIST-W → ELEM-W L
-L → _ | virg LIST-W
-ELEM-W → EXPR | cadeia
-EXPR → SIMPLES P
-P → _ | oprel SIMPLES
-SIMPLES → TERMO R
-R → _ | opad SIMPLES
-TERMO → FAT S
-S → _ | opmul TERMO
-FAT → id | cte | abrepar EXPR fechapar | verdadeiro | falso | opneg FAT
-}
-'''
+Você pode conferir como foi realizada a implementação a seguir, mas caso prefira pode
+encontrá-lo no meu [github](https://github.com/Ruanrls/compilador/src/codebase/syntactic.py)
+
+```python
+from lexer import Lexer, TOKEN_TYPE
 
 class Syntactic:
     def __init__(self) -> None:
@@ -346,3 +319,4 @@ class Syntactic:
             self.term()
         else:
             return
+```

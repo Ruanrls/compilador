@@ -1,0 +1,44 @@
+import { Callout } from 'nextra/components'
+
+# A classe token [#token]
+
+<Callout type="info">
+    Tokens são uma representação de diferentes tipos de elementos no código, como palavras,
+    símbolos, números, operadores, etc.
+
+    Eles ajudam o compilador entender as instruções, e são como peças de um quebra-cabeça que
+    facilitam o 'programa' interpretar o código.
+</Callout>
+
+A classe Token é responsável por representar um token encontrado pelo analisador léxico.
+Ela possui os seguintes propósitos e funcionalidades:
+
+- Armazenar informações sobre um token:
+A classe armazena informações essenciais sobre um token, incluindo seu tipo, lexema,
+número da linha e posição dentro da linha.
+
+- Encapsular os dados do token: A classe encapsula os dados do token em um objeto,
+permitindo que eles sejam facilmente acessados e manipulados.
+
+- Facilitar a manipulação e exibição dos tokens: A classe fornece um método __str__()
+que retorna uma representação em string do token, facilitando sua exibição e utilização
+em mensagens de saída e depuração.
+
+### Atributos da classe:
+
+O método **__init__()** é o construtor da classe **Token**. Ele recebe os seguintes parâmetros:
+1. **type**: O tipo do token, representado por uma tupla contendo um código numérico e uma descrição textual.
+2. **lexeme** O lexema correspondente ao token, ou seja, a sequência de caracteres que representa o
+token no código fonte.
+3. **line**: O número da linha onde o token foi encontrado.
+4. **inline_position**: A posição dentro da linha onde o token foi encontrado.
+
+### Método __str__()
+O método **\__str__()** é responsável por retornar uma representação em string do token. Ele retorna uma mensagem formatada contendo o código numérico, a descrição textual, o lexema, o número da linha e a posição dentro da linha do token.
+
+<Callout type="error" emoji="❗">
+    A classe Token desempenha um papel crucial no processo de análise léxica,
+    pois é responsável por representar os tokens encontrados no código fonte,
+    permitindo que sejam manipulados e utilizados posteriormente nas etapas de análise sintática,
+    análise semântica e geração de código.
+</Callout>

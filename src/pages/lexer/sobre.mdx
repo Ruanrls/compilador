@@ -1,0 +1,34 @@
+## Analisador léxico [#analisador-lexico]
+
+O analisador léxico é uma etapa fundamental no processo de compilação de um programa.
+Sua função é ler o código fonte e dividir o texto em unidades significativas chamadas tokens.
+Cada token corresponde a uma sequência de caracteres que representa um elemento léxico,
+como palavras-chave, identificadores, números, operadores e delimitadores.
+
+Você pode saber mais a respeito no tópico sobre a [classe Token](/classes/tokens)
+
+---
+
+#### Método load:
+O método load(file_ name) é responsável por carregar o código fonte a partir de um arquivo. Ele recebe o nome do arquivo como parâmetro e lê o seu conteúdo. O código lido é armazenado na variável self.code e o tamanho do código é armazenado em self.code_length.
+
+#### Método parse_tokens
+O método parse_tokens() é o ponto de entrada para a análise léxica. Ele percorre o código fonte caractere por caractere e chama os métodos apropriados para identificar os diferentes tipos de tokens. Os tokens encontrados são armazenados na lista de tokens.
+
+#### Métodos de identificação de tokens
+Os seguintes métodos são responsáveis por identificar os diferentes tipos de tokens:
+
+- get_identify: Identifica identificadores e palavras-chave.
+- get_number: Identifica números inteiros e reais.
+- get_delimiter: Identifica delimitadores e atribuição.
+- get_operator: Identifica operadores.
+- get_bracket_open: Identifica o símbolo de abertura de chaves.
+- get_bracket_close: Identifica o símbolo de fechamento de chaves.
+- get_string: Identifica cadeias de caracteres.
+- get_line_comment: Ignora comentários de linha.
+- get_block_comment: Ignora comentários de bloco.
+
+### Método get_next_token
+O método get_next_token() é um gerador que retorna sequencialmente os tokens encontrados,
+um por vez, usando yield. Ele também retorna um token de final de arquivo **(EOF)** no final da lista de tokens.
+
