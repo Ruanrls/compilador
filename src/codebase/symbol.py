@@ -9,6 +9,9 @@ class Symbol:
     
     def __str__(self) -> str:
         return f" -> {self.type}, line: {self.line}"
+    
+    def __repr__(self) -> str:
+        return f"[{self.type} - line: {self.line}]"
 
 class Symbols:
     def __init__(self) -> None:
@@ -34,6 +37,10 @@ class Symbols:
         for symbol in symbols:
             self.validateSymbol(symbol.lexeme, symbol.line)
         
+    def saveTableToFile(self, path: str) -> None:
+        with open(path, 'w') as file:
+            file.write(str(self.table))
+    
     def __str__(self) -> str:
         to_print = ""
         for key in self.table:
