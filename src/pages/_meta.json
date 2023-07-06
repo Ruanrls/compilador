@@ -2,6 +2,6 @@
     "index": "Introdução",
     "classes": "Classes de apoio",
     "lexer": "Analisador léxico",
-    "synctactic": "Analisador sintático",
+    "syntactic": "Analisador sintático",
     "semantic": "Analisador semântico"
 }
