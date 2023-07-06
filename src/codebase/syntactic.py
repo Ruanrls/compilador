@@ -209,7 +209,12 @@ class Syntactic:
 
         self.consume(TOKEN_TYPE.SE)
         self.consume(TOKEN_TYPE.ABREPAR)
-        self.expr()
+        expr_type = self.expr()
+        
+        #condicoes devem ser logicas
+        if expr_type != TOKEN_TYPE.LOGICO[1]:
+            raise Exception("A expressão condicional do SE deve retornar um valor lógico linha " + str(self.current_token.line))
+
         self.consume(TOKEN_TYPE.FECHAPAR)
         self.c_comp()
         self.h()
@@ -218,22 +223,24 @@ class Syntactic:
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.simple()
-        self.p()
+        expression_type = self.simple()
+        expression_type = self.p(expression_type)
+        return expression_type
 
     def simple(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.term()
-        self.r()
+        term_type = self.term()
+        return self.r(term_type)
+
 
     def term(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.fact()
-        self.s()
+        fact_type = self.fact()
+        return self.s(fact_type)
 
     def fact(self):
         if(self.current_token == None):
@@ -241,20 +248,32 @@ class Syntactic:
         
         if self.current_token.type == TOKEN_TYPE.IDENT:
             identifier = self.consume(TOKEN_TYPE.IDENT)
-            self.symbol_table.validateSymbol(identifier.lexeme, identifier.line)
+            symbol = self.symbol_table.validateSymbol(identifier.lexeme, identifier.line)
+            symbol_type = symbol.type[1]
+            if(symbol_type in [TOKEN_TYPE.INTEIRO[1], TOKEN_TYPE.REAL[1]]):
+                return TOKEN_TYPE.NUM[1]
+            elif(symbol_type in [TOKEN_TYPE.VERDADEIRO[1], TOKEN_TYPE.FALSO[1]]):
+                return TOKEN_TYPE.LOGICO[1]
+            elif(symbol_type == TOKEN_TYPE.CARACTER[1]):
+                return TOKEN_TYPE.CADEIA[1]
+            return symbol_type
         elif self.current_token.type == TOKEN_TYPE.NUM:
             self.consume(TOKEN_TYPE.NUM)
+            return TOKEN_TYPE.NUM[1]
         elif self.current_token.type == TOKEN_TYPE.ABREPAR:
             self.consume(TOKEN_TYPE.ABREPAR)
-            self.expr()
+            expr_type = self.expr()
             self.consume(TOKEN_TYPE.FECHAPAR)
+            return expr_type
         elif self.current_token.type == TOKEN_TYPE.VERDADEIRO:
             self.consume(TOKEN_TYPE.VERDADEIRO)
+            return TOKEN_TYPE.LOGICO[1]
         elif self.current_token.type == TOKEN_TYPE.FALSO:
             self.consume(TOKEN_TYPE.FALSO)
+            return TOKEN_TYPE.LOGICO[1]
         elif self.current_token.type == TOKEN_TYPE.OPNEG:
             self.consume(TOKEN_TYPE.OPNEG)
-            self.fact()
+            return self.fact()
         else:
             raise Exception(f'Expected a factor but found {self.current_token.type} on line {self.current_token.line}')
     
@@ -264,7 +283,12 @@ class Syntactic:
 
         self.consume(TOKEN_TYPE.ENQUANTO)
         self.consume(TOKEN_TYPE.ABREPAR)
-        self.expr()
+        expr_type = self.expr()
+
+        #while deve receber operadores logicos
+        if expr_type != TOKEN_TYPE.LOGICO[1]:
+            raise Exception("A expressão condicional do ENQUANTO deve retornar um valor lógico linha " + str(self.current_token.line))
+
         self.consume(TOKEN_TYPE.FECHAPAR)
         self.c_comp()
     
@@ -335,32 +359,51 @@ class Syntactic:
         else:
             return
         
-    def p(self):
+    def p(self, left_expr_type):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
         if self.current_token.type == TOKEN_TYPE.OPREL:
-            self.consume(TOKEN_TYPE.OPREL)
-            self.simple()
+            oprel_token = self.consume(TOKEN_TYPE.OPREL)
+            right_expr_type = self.simple()
+
+            #operadores diferentes nao podem ser comparados
+            if(left_expr_type != right_expr_type):
+                raise Exception(f'Operador relacional {oprel_token.lexeme} usado com operandos de tipos diferentes (linha {self.current_token.line})')
+
+            #operadores booleanos e strings so podem ser diferentes ou iguais
+            if((left_expr_type == TOKEN_TYPE.LOGICO[1] or left_expr_type == TOKEN_TYPE.CADEIA[1]) and oprel_token.lexeme not in ['<>', '=']):
+                raise Exception(f'Operador relacional {oprel_token.lexeme} usado com operandos lógicos ou strings (linha {self.current_token.line})')
+            
+            return TOKEN_TYPE.LOGICO[1]
         else:
-            return
+            return left_expr_type
     
-    def r(self):
+    def r(self, left_expr_type):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
         if self.current_token.type == TOKEN_TYPE.OPAD:
-            self.consume(TOKEN_TYPE.OPAD)
-            self.simple()
-        else:
-            return
+            oprel_token = self.consume(TOKEN_TYPE.OPAD)
+            right_expr_type = self.simple()
+            #operadores diferentes nao podem ser comparados
+            if(left_expr_type != right_expr_type):
+                raise Exception(f'Operador relacional {oprel_token.lexeme} usado com operandos de tipos diferentes (linha {self.current_token.line})')
 
-    def s(self):
+            #soma apenas com valores numericos
+            if(left_expr_type != TOKEN_TYPE.NUM[1]):
+                raise Exception(f'Operador relacional {oprel_token.lexeme} usado com operandos numericos (linha {self.current_token.line})')
+            
+            return TOKEN_TYPE.LOGICO[1]
+        else:
+            return left_expr_type
+
+    def s(self, left_expr_type):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
         if self.current_token.type == TOKEN_TYPE.OPMUL:
             self.consume(TOKEN_TYPE.OPMUL)
-            self.term()
+            return self.term()
         else:
-            return
+            return left_expr_type
