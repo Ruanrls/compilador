@@ -1,5 +1,6 @@
 from lexer import Lexer, TOKEN_TYPE
 from symbol import Symbols
+from semantic import Semantic
 
 '''
 P = {
@@ -213,8 +214,7 @@ class Syntactic:
         
         #condicoes devem ser logicas
         if expr_type != TOKEN_TYPE.LOGICO[1]:
-            raise Exception("A expressão condicional do SE deve retornar um valor lógico linha " + str(self.current_token.line))
-
+            Semantic.invalidExpressionType("SE", self.current_token.line)
         self.consume(TOKEN_TYPE.FECHAPAR)
         self.c_comp()
         self.h()
@@ -287,7 +287,7 @@ class Syntactic:
 
         #while deve receber operadores logicos
         if expr_type != TOKEN_TYPE.LOGICO[1]:
-            raise Exception("A expressão condicional do ENQUANTO deve retornar um valor lógico linha " + str(self.current_token.line))
+            Semantic.invalidExpressionType("ENQUANTO", self.current_token.line)
 
         self.consume(TOKEN_TYPE.FECHAPAR)
         self.c_comp()
@@ -369,11 +369,11 @@ class Syntactic:
 
             #operadores diferentes nao podem ser comparados
             if(left_expr_type != right_expr_type):
-                raise Exception(f'Operador relacional {oprel_token.lexeme} usado com operandos de tipos diferentes (linha {self.current_token.line})')
+                Semantic.invalidDifferentTypes(oprel_token.lexeme, self.current_token.line)
 
             #operadores booleanos e strings so podem ser diferentes ou iguais
             if((left_expr_type == TOKEN_TYPE.LOGICO[1] or left_expr_type == TOKEN_TYPE.CADEIA[1]) and oprel_token.lexeme not in ['<>', '=']):
-                raise Exception(f'Operador relacional {oprel_token.lexeme} usado com operandos lógicos ou strings (linha {self.current_token.line})')
+                Semantic.invalidBooleanOrStringOperator(oprel_token.lexeme, self.current_token.line)
             
             return TOKEN_TYPE.LOGICO[1]
         else:
@@ -388,11 +388,11 @@ class Syntactic:
             right_expr_type = self.simple()
             #operadores diferentes nao podem ser comparados
             if(left_expr_type != right_expr_type):
-                raise Exception(f'Operador relacional {oprel_token.lexeme} usado com operandos de tipos diferentes (linha {self.current_token.line})')
+                Semantic.invalidDifferentTypes(oprel_token.lexeme, self.current_token.line)
 
             #soma apenas com valores numericos
             if(left_expr_type != TOKEN_TYPE.NUM[1]):
-                raise Exception(f'Operador relacional {oprel_token.lexeme} usado com operandos numericos (linha {self.current_token.line})')
+                Semantic.invalidAritmeticOperands(oprel_token.lexeme, self.current_token.line)
             
             return TOKEN_TYPE.LOGICO[1]
         else:
