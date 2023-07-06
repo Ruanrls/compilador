@@ -1,4 +1,5 @@
 from lexer import Lexer, TOKEN_TYPE
+from symbol import Symbols
 
 '''
 P = {
@@ -38,6 +39,8 @@ class Syntactic:
         self.current_token = None
         self.lexer = None
         self.get_next_token = None
+        self.symbol_table = Symbols()
+        self.comparison_type = None
 
     def interpreter(self, file_name):
         if self.lexer != None:
@@ -67,8 +70,10 @@ class Syntactic:
         if(self.lexer == None or self.current_token == None or self.get_next_token == None):
             raise Exception("Interpreter not initialized")
 
+        last_token = self.current_token
         self.validate_token(token)
         self.current_token = next(self.get_next_token)
+        return last_token
 
     def prog(self):
         self.consume(TOKEN_TYPE.PROGRAMA)
@@ -108,31 +113,41 @@ class Syntactic:
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.list_id()
+        identifiers = self.list_id()
         self.consume(TOKEN_TYPE.DPONTOS)
-        self._type()
-        self.consume(TOKEN_TYPE.PVIRG)
+        identify_type = self._type()
+        self.consume(TOKEN_TYPE.PVIRG)  
+
+        self.symbol_table.addSymbols(identifiers, identify_type.type)
 
 
     def list_id(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.consume(TOKEN_TYPE.IDENT)
-        self.e()
+        identify = self.consume(TOKEN_TYPE.IDENT)
+        identify_list = self.e()
+
+        if(identify_list != None):
+            list = []
+            list.append(identify)
+            list.extend(identify_list)
+            return list
+
+        return [identify]
 
     def _type(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
         if self.current_token.type == TOKEN_TYPE.INTEIRO:
-            self.consume(TOKEN_TYPE.INTEIRO)
+            return self.consume(TOKEN_TYPE.INTEIRO)
         elif self.current_token.type == TOKEN_TYPE.REAL:
-            self.consume(TOKEN_TYPE.REAL)
+            return self.consume(TOKEN_TYPE.REAL)
         elif self.current_token.type == TOKEN_TYPE.LOGICO:
-            self.consume(TOKEN_TYPE.LOGICO)
+            return self.consume(TOKEN_TYPE.LOGICO)
         elif self.current_token.type == TOKEN_TYPE.CARACTER:
-            self.consume(TOKEN_TYPE.CARACTER)
+            return self.consume(TOKEN_TYPE.CARACTER)
         else:
             raise Exception(f'Expected a type but found {self.current_token.type} on line {self.current_token.line}')
 
@@ -150,7 +165,7 @@ class Syntactic:
 
         if self.current_token.type == TOKEN_TYPE.VIRG:
             self.consume(TOKEN_TYPE.VIRG)
-            self.list_id()
+            return self.list_id()
         else:
             return
     
@@ -225,7 +240,8 @@ class Syntactic:
             raise Exception("Interpreter not initialized")
         
         if self.current_token.type == TOKEN_TYPE.IDENT:
-            self.consume(TOKEN_TYPE.IDENT)
+            identifier = self.consume(TOKEN_TYPE.IDENT)
+            self.symbol_table.validateSymbol(identifier.lexeme, identifier.line)
         elif self.current_token.type == TOKEN_TYPE.NUM:
             self.consume(TOKEN_TYPE.NUM)
         elif self.current_token.type == TOKEN_TYPE.ABREPAR:
@@ -258,7 +274,8 @@ class Syntactic:
 
         self.consume(TOKEN_TYPE.LEIA)
         self.consume(TOKEN_TYPE.ABREPAR)
-        self.list_id()
+        identifier_list = self.list_id()
+        self.symbol_table.validateSymbols(identifier_list)
         self.consume(TOKEN_TYPE.FECHAPAR)
         self.consume(TOKEN_TYPE.PVIRG)
     
@@ -301,8 +318,9 @@ class Syntactic:
     def attrib(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
-
-        self.consume(TOKEN_TYPE.IDENT)
+        
+        identifier = self.consume(TOKEN_TYPE.IDENT)
+        self.symbol_table.validateSymbol(identifier.lexeme, identifier.line)
         self.consume(TOKEN_TYPE.ATRIB)
         self.expr()
         self.consume(TOKEN_TYPE.PVIRG)

@@ -24,6 +24,10 @@ if __name__ == '__main__':
         try:
             compiler.interpreter(args.path)
             compiler.initialize()
+            print(compiler.symbol_table)
+            for token in compiler.lexer.tokens:
+                print(token)
+            print('Compilado com sucesso')
         except Exception as e:
             print(e)
             sys.exit(1)
@@ -36,6 +40,7 @@ if __name__ == '__main__':
                 print('Compiling file: ', file)
 
                 compiler = Syntactic()
+                print('Compilado com sucesso!')
                 try:
                     compiler.interpreter(os.path.join(args.folder, file))
                     compiler.initialize()
