@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 argument = ArgumentParser()
 argument.add_argument('-p', '--path', help='File to be compiled')
 argument.add_argument('-f', '--folder', help='Folder with the example files')
+argument.add_argument('-t', '--to-save', help='Test the compiler with a file')
 
 args = argument.parse_args()
 
@@ -24,20 +25,28 @@ if __name__ == '__main__':
         try:
             compiler.interpreter(args.path)
             compiler.initialize()
+            if(args.to_save):
+                compiler.symbol_table.saveTableToFile(args.to_save)
+            print('Compilado com sucesso')
         except Exception as e:
             print(e)
             sys.exit(1)
         
     elif args.folder:
         files = os.listdir(args.folder)
+        count = 0
         for file in files:
+            count += 1
             if file.endswith('.txt'):
                 print('\n------------------------\n')
                 print('Compiling file: ', file)
 
                 compiler = Syntactic()
+                print('Compilado com sucesso!')
                 try:
                     compiler.interpreter(os.path.join(args.folder, file))
                     compiler.initialize()
+                    if(args.to_save):
+                        compiler.symbol_table.saveTableToFile(args.to_save.replace('.txt', f'_{count}.txt'))
                 except Exception as e:
                     print(e)

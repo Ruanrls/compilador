@@ -1,0 +1,41 @@
+import { Callout } from 'nextra/components'
+
+## Analisador semântico
+
+Para chegar nesse resultado, foi necessário realizar algumas alterações na versão já existente do analizador sintático.
+
+1. Adicionado um parâmetro left_expr_type no método p:
+    - Descrição: O parâmetro left_expr_type é usado para passar o tipo da expressão à esquerda para o método p.
+    - Motivação: Permitir a validação do tipo da expressão à esquerda em operações relacionais.
+
+2. Modificado o método expr:
+    - Descrição: Adicionada a declaração de uma variável expr_type que armazena o tipo da expressão.
+    - Motivação: Permitir que o tipo da expressão seja retornado pelo método expr.
+
+3. Modificado o método simple:
+    - Descrição: Agora, o método simple retorna o tipo da expressão após chamar o método p.
+    - Motivação: Possibilitar a passagem do tipo da expressão para o método p e o retorno do tipo atualizado.
+
+4. Modificado o método p:
+    - Descrição: Adicionada a validação do tipo da expressão em operações relacionais.
+    - Motivação: Garantir que as expressões em operações relacionais tenham tipos lógicos válidos.
+
+5. Modificado o método _if:
+    - Descrição: Incluída a validação de que a expressão condicional do SE retorna um valor lógico.
+    - Motivação: Garantir que a expressão condicional seja avaliada corretamente como um valor lógico.
+
+6. Modificado o método _while:
+    - Descrição: Adicionada a validação de que a expressão condicional do ENQUANTO retorna um valor lógico.
+    - Motivação: Assegurar que a expressão condicional seja avaliada corretamente como um valor lógico.
+
+<Callout type="info">
+    A classe Semantic implementa uma serie de métodos, para a validação das regras de semântica da linguagem.
+</Callout>
+
+## Regras de semântica:
+    - Verificar se a variável foi declarada multiplas vezes
+    - Verificar se a variável foi declarada antes de ser utilizada
+    - Verificar se as operações de aritmética são feitas com variáveis de tipo numérico
+    - Verificar se os operadores de relações são feitos com variáveis de tipos iguais
+    - Verificar se variáveis do tipo lógico e cadeia de caracteres são utilizadas apenas com os operadores permitidos (\<> e =)
+    - Verificar se as expressões dos comandos (ENQUANTO e SE) respeitam o valor lógico

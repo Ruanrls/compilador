@@ -1,4 +1,6 @@
 from lexer import Lexer, TOKEN_TYPE
+from symbol import Symbols
+from semantic import Semantic
 
 '''
 P = {
@@ -38,6 +40,8 @@ class Syntactic:
         self.current_token = None
         self.lexer = None
         self.get_next_token = None
+        self.symbol_table = Symbols()
+        self.comparison_type = None
 
     def interpreter(self, file_name):
         if self.lexer != None:
@@ -67,8 +71,10 @@ class Syntactic:
         if(self.lexer == None or self.current_token == None or self.get_next_token == None):
             raise Exception("Interpreter not initialized")
 
+        last_token = self.current_token
         self.validate_token(token)
         self.current_token = next(self.get_next_token)
+        return last_token
 
     def prog(self):
         self.consume(TOKEN_TYPE.PROGRAMA)
@@ -108,31 +114,41 @@ class Syntactic:
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.list_id()
+        identifiers = self.list_id()
         self.consume(TOKEN_TYPE.DPONTOS)
-        self._type()
-        self.consume(TOKEN_TYPE.PVIRG)
+        identify_type = self._type()
+        self.consume(TOKEN_TYPE.PVIRG)  
+
+        self.symbol_table.addSymbols(identifiers, identify_type.type)
 
 
     def list_id(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.consume(TOKEN_TYPE.IDENT)
-        self.e()
+        identify = self.consume(TOKEN_TYPE.IDENT)
+        identify_list = self.e()
+
+        if(identify_list != None):
+            list = []
+            list.append(identify)
+            list.extend(identify_list)
+            return list
+
+        return [identify]
 
     def _type(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
         if self.current_token.type == TOKEN_TYPE.INTEIRO:
-            self.consume(TOKEN_TYPE.INTEIRO)
+            return self.consume(TOKEN_TYPE.INTEIRO)
         elif self.current_token.type == TOKEN_TYPE.REAL:
-            self.consume(TOKEN_TYPE.REAL)
+            return self.consume(TOKEN_TYPE.REAL)
         elif self.current_token.type == TOKEN_TYPE.LOGICO:
-            self.consume(TOKEN_TYPE.LOGICO)
+            return self.consume(TOKEN_TYPE.LOGICO)
         elif self.current_token.type == TOKEN_TYPE.CARACTER:
-            self.consume(TOKEN_TYPE.CARACTER)
+            return self.consume(TOKEN_TYPE.CARACTER)
         else:
             raise Exception(f'Expected a type but found {self.current_token.type} on line {self.current_token.line}')
 
@@ -150,7 +166,7 @@ class Syntactic:
 
         if self.current_token.type == TOKEN_TYPE.VIRG:
             self.consume(TOKEN_TYPE.VIRG)
-            self.list_id()
+            return self.list_id()
         else:
             return
     
@@ -194,7 +210,11 @@ class Syntactic:
 
         self.consume(TOKEN_TYPE.SE)
         self.consume(TOKEN_TYPE.ABREPAR)
-        self.expr()
+        expr_type = self.expr()
+        
+        #condicoes devem ser logicas
+        if expr_type != TOKEN_TYPE.LOGICO[1]:
+            Semantic.invalidExpressionType("SE", self.current_token.line)
         self.consume(TOKEN_TYPE.FECHAPAR)
         self.c_comp()
         self.h()
@@ -203,42 +223,57 @@ class Syntactic:
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.simple()
-        self.p()
+        expression_type = self.simple()
+        expression_type = self.p(expression_type)
+        return expression_type
 
     def simple(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.term()
-        self.r()
+        term_type = self.term()
+        return self.r(term_type)
+
 
     def term(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
-        self.fact()
-        self.s()
+        fact_type = self.fact()
+        return self.s(fact_type)
 
     def fact(self):
         if(self.current_token == None):
             raise Exception("Interpreter not initialized")
         
         if self.current_token.type == TOKEN_TYPE.IDENT:
-            self.consume(TOKEN_TYPE.IDENT)
+            identifier = self.consume(TOKEN_TYPE.IDENT)
+            symbol = self.symbol_table.validateSymbol(identifier.lexeme, identifier.line)
+            symbol_type = symbol.type[1]
+            if(symbol_type in [TOKEN_TYPE.INTEIRO[1], TOKEN_TYPE.REAL[1]]):
+                return TOKEN_TYPE.NUM[1]
+            elif(symbol_type in [TOKEN_TYPE.VERDADEIRO[1], TOKEN_TYPE.FALSO[1]]):
+                return TOKEN_TYPE.LOGICO[1]
+            elif(symbol_type == TOKEN_TYPE.CARACTER[1]):
+                return TOKEN_TYPE.CADEIA[1]
+            return symbol_type
         elif self.current_token.type == TOKEN_TYPE.NUM:
             self.consume(TOKEN_TYPE.NUM)
+            return TOKEN_TYPE.NUM[1]
         elif self.current_token.type == TOKEN_TYPE.ABREPAR:
             self.consume(TOKEN_TYPE.ABREPAR)
-            self.expr()
+            expr_type = self.expr()
             self.consume(TOKEN_TYPE.FECHAPAR)
+            return expr_type
         elif self.current_token.type == TOKEN_TYPE.VERDADEIRO:
             self.consume(TOKEN_TYPE.VERDADEIRO)
+            return TOKEN_TYPE.LOGICO[1]
         elif self.current_token.type == TOKEN_TYPE.FALSO:
             self.consume(TOKEN_TYPE.FALSO)
+            return TOKEN_TYPE.LOGICO[1]
         elif self.current_token.type == TOKEN_TYPE.OPNEG:
             self.consume(TOKEN_TYPE.OPNEG)
-            self.fact()
+            return self.fact()
         else:
             raise Exception(f'Expected a factor but found {self.current_token.type} on line {self.current_token.line}')
     
@@ -248,7 +283,12 @@ class Syntactic:
 
         self.consume(TOKEN_TYPE.ENQUANTO)
         self.consume(TOKEN_TYPE.ABREPAR)
-        self.expr()
+        expr_type = self.expr()
+
+        #while deve receber operadores logicos
+        if expr_type != TOKEN_TYPE.LOGICO[1]:
+            Semantic.invalidExpressionType("ENQUANTO", self.current_token.line)
+
         self.consume(TOKEN_TYPE.FECHAPAR)
         self.c_comp()
     
@@ -258,7 +298,8 @@ class Syntactic:
 
         self.consume(TOKEN_TYPE.LEIA)
         self.consume(TOKEN_TYPE.ABREPAR)
-        self.list_id()
+        identifier_list = self.list_id()
+        self.symbol_table.validateSymbols(identifier_list)
         self.consume(TOKEN_TYPE.FECHAPAR)
         self.consume(TOKEN_TYPE.PVIRG)
     
@@ -301,8 +342,9 @@ class Syntactic:
     def attrib(self):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
-
-        self.consume(TOKEN_TYPE.IDENT)
+        
+        identifier = self.consume(TOKEN_TYPE.IDENT)
+        self.symbol_table.validateSymbol(identifier.lexeme, identifier.line)
         self.consume(TOKEN_TYPE.ATRIB)
         self.expr()
         self.consume(TOKEN_TYPE.PVIRG)
@@ -317,32 +359,51 @@ class Syntactic:
         else:
             return
         
-    def p(self):
+    def p(self, left_expr_type):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
         if self.current_token.type == TOKEN_TYPE.OPREL:
-            self.consume(TOKEN_TYPE.OPREL)
-            self.simple()
+            oprel_token = self.consume(TOKEN_TYPE.OPREL)
+            right_expr_type = self.simple()
+
+            #operadores diferentes nao podem ser comparados
+            if(left_expr_type != right_expr_type):
+                Semantic.invalidDifferentTypes(oprel_token.lexeme, self.current_token.line)
+
+            #operadores booleanos e strings so podem ser diferentes ou iguais
+            if((left_expr_type == TOKEN_TYPE.LOGICO[1] or left_expr_type == TOKEN_TYPE.CADEIA[1]) and oprel_token.lexeme not in ['<>', '=']):
+                Semantic.invalidBooleanOrStringOperator(oprel_token.lexeme, self.current_token.line)
+            
+            return TOKEN_TYPE.LOGICO[1]
         else:
-            return
+            return left_expr_type
     
-    def r(self):
+    def r(self, left_expr_type):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
         if self.current_token.type == TOKEN_TYPE.OPAD:
-            self.consume(TOKEN_TYPE.OPAD)
-            self.simple()
-        else:
-            return
+            oprel_token = self.consume(TOKEN_TYPE.OPAD)
+            right_expr_type = self.simple()
+            #operadores diferentes nao podem ser comparados
+            if(left_expr_type != right_expr_type):
+                Semantic.invalidDifferentTypes(oprel_token.lexeme, self.current_token.line)
 
-    def s(self):
+            #soma apenas com valores numericos
+            if(left_expr_type != TOKEN_TYPE.NUM[1]):
+                Semantic.invalidAritmeticOperands(oprel_token.lexeme, self.current_token.line)
+            
+            return TOKEN_TYPE.LOGICO[1]
+        else:
+            return left_expr_type
+
+    def s(self, left_expr_type):
         if self.current_token == None:
             raise Exception("Interpreter not initialized")
 
         if self.current_token.type == TOKEN_TYPE.OPMUL:
             self.consume(TOKEN_TYPE.OPMUL)
-            self.term()
+            return self.term()
         else:
-            return
+            return left_expr_type
